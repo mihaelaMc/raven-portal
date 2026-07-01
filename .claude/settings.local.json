@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ruby -v)",
+      "Bash(rails -v)",
+      "Bash(gem list *)",
+      "PowerShell(ruby -v)",
+      "PowerShell(rails -v)",
+      "PowerShell(gem -v)",
+      "PowerShell(winget --version)",
+      "PowerShell(winget search RubyInstaller --accept-source-agreements 2>&1)",
+      "PowerShell(winget install --id RubyInstallerTeam.RubyWithDevKit.3.4 --accept-package-agreements --accept-source-agreements -e)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; ruby -v; Write-Output \"---\"; gem -v; Write-Output \"---\"; ridk version 2>&1)",
+      "PowerShell([Environment]::GetEnvironmentVariable\\(\"Path\", \"User\"\\))",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; gem install rails --no-document)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae; rails new raven-portal --css=tailwind --database=sqlite3)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; bin/rails generate authentication)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; bin/rails generate --help 2>&1 | Select-String -Pattern \"auth\")",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails generate --help 2>&1 | Select-String -Pattern \"auth\")",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails generate authentication 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails db:migrate 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails generate migration AddCrawlerNameToUsers crawler_name:string 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails tailwindcss:build 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails test 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails db:test:prepare 2>&1; ruby bin/rails test 2>&1)",
+      "Bash(git add *)"
+    ]
+  }
+}

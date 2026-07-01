@@ -1,0 +1,38 @@
+<div class="mx-auto md:w-2/3 w-full">
+  <% if alert = flash[:alert] %>
+    <p class="py-2 px-3 bg-blood-600/20 border border-blood-600 mb-5 text-blood-500 font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
+  <% end %>
+
+  <% if notice = flash[:notice] %>
+    <p class="py-2 px-3 bg-arcane-500/10 border border-arcane-500 mb-5 text-arcane-400 font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
+  <% end %>
+
+  <p class="system-tag mb-3">// RETURNING CRAWLER</p>
+  <h1 class="font-display text-4xl text-ember-400">Continue Your Run</h1>
+
+  <%= form_with url: session_url, class: "contents" do |form| %>
+    <div class="my-5">
+      <%= form.label :email_address, "Email", class: "system-tag block mb-2" %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "field-dark block rounded-md px-3 py-2 mt-1 w-full" %>
+    </div>
+
+    <div class="my-5">
+      <%= form.label :password, class: "system-tag block mb-2" %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: "field-dark block rounded-md px-3 py-2 mt-1 w-full" %>
+    </div>
+
+    <div class="col-span-6 sm:flex sm:items-center sm:gap-4">
+      <div class="inline">
+        <%= form.submit "Sign In", class: "btn-torch w-full sm:w-auto text-center rounded px-4 py-2.5 cursor-pointer" %>
+      </div>
+
+      <div class="mt-4 text-sm text-parchment-dim sm:mt-0">
+        <%= link_to "Forgot password?", new_password_path, class: "text-arcane-400 underline hover:no-underline" %>
+      </div>
+    </div>
+
+    <div class="mt-4 text-sm text-parchment-dim">
+      New here? <%= link_to "Create a crawler", new_registration_path, class: "text-arcane-400 underline hover:no-underline" %>
+    </div>
+  <% end %>
+</div>

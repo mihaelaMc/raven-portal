@@ -1,0 +1,24 @@
+<div class="mx-auto md:w-2/3 w-full">
+  <% if alert = flash[:alert] %>
+    <p class="py-2 px-3 bg-blood-600/20 border border-blood-600 mb-5 text-blood-500 font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
+  <% end %>
+
+  <p class="system-tag mb-3">// RECOVERY</p>
+  <h1 class="font-display text-4xl text-ember-400">Forge A New Sigil</h1>
+
+  <%= form_with url: password_path(params[:token]), method: :put, class: "contents" do |form| %>
+    <div class="my-5">
+      <%= form.label :password, "New Password", class: "system-tag block mb-2" %>
+      <%= form.password_field :password, required: true, autocomplete: "new-password", placeholder: "Enter new password", maxlength: 72, class: "field-dark block rounded-md px-3 py-2 mt-1 w-full" %>
+    </div>
+
+    <div class="my-5">
+      <%= form.label :password_confirmation, "Confirm Password", class: "system-tag block mb-2" %>
+      <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Repeat new password", maxlength: 72, class: "field-dark block rounded-md px-3 py-2 mt-1 w-full" %>
+    </div>
+
+    <div class="inline">
+      <%= form.submit "Save", class: "btn-torch w-full sm:w-auto text-center rounded px-4 py-2.5 cursor-pointer" %>
+    </div>
+  <% end %>
+</div>
