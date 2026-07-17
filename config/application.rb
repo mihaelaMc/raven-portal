@@ -11,6 +11,14 @@ module RavenPortal
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
+    # This is a JSON API for the React frontend, no server-rendered views.
+    config.api_only = true
+
+    # Devise touches request.session internally (e.g. expire_data_after_sign_in!)
+    # even though nothing here relies on cookie sessions for auth (that's the JWT's job).
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CacheStore
+
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.

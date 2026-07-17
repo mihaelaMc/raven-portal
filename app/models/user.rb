@@ -1,8 +1,14 @@
 class User < ApplicationRecord
-  has_secure_password
-  has_many :sessions, dependent: :destroy
+  devise :database_authenticatable, :registerable,
+         :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
 
-  normalizes :email_address, with: ->(e) { e.strip.downcase }
+  has_many :refresh_tokens, dependent: :destroy
+
+  enum :role, { user: 0, admin: 1 }, default: :user
 
   validates :crawler_name, presence: true
+
+  def as_json(options = {})
+    super(options.merge(only: %i[ id email crawler_name role created_at ]))
+  end
 end

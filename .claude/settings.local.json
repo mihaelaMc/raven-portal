@@ -23,7 +23,10 @@
       "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails tailwindcss:build 2>&1)",
       "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails test 2>&1)",
       "PowerShell($env:Path = \"C:\\\\Ruby34-x64\\\\bin;\" + $env:Path; cd C:\\\\Users\\\\mihae\\\\raven-portal; ruby bin/rails db:test:prepare 2>&1; ruby bin/rails test 2>&1)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(pg_lsclusters)",
+      "Bash(bundle exec *)",
+      "Bash(curl -sI https://rubygems.org)"
     ]
   }
 }
