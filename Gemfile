@@ -17,6 +17,10 @@ gem "devise-jwt"
 gem "pundit"
 # CORS for the React frontend [https://github.com/cyu/rack-cors]
 gem "rack-cors"
+# Pagination [https://github.com/kaminari/kaminari]
+gem "kaminari"
+# Rate limiting / throttling [https://github.com/rack/rack-attack]
+gem "rack-attack"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]

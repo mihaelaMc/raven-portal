@@ -50,4 +50,7 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Request specs log in repeatedly; don't let Rack::Attack's throttles get in the way.
+  Rack::Attack.enabled = false
 end

@@ -1,8 +1,57 @@
 class Api::V1::UsersController < Api::V1::BaseController
+  def index
+    authorize User
+
+    users = User.page(params[:page]).per(params[:per_page] || 25)
+
+    render json: {
+      users: users,
+      meta: {
+        current_page: users.current_page,
+        total_pages: users.total_pages,
+        total_count: users.total_count
+      }
+    }, status: :ok
+  end
+
   def show
     user = User.find(params[:id])
     authorize user
 
     render json: { user: user }, status: :ok
+  end
+
+  def update
+    user = User.find(params[:id])
+    authorize user
+
+    user.assign_attributes(user_params)
+    user.role = role_param if current_user.admin? && role_param.present?
+
+    if user.save
+      render json: { user: user }, status: :ok
+    else
+      render json: { errors: user.errors.full_messages }, status: :unprocessable_content
+    end
+  end
+
+  def destroy
+    user = User.find(params[:id])
+    authorize user
+
+    user.destroy
+    head :no_content
+  end
+
+  private
+
+  # :role is deliberately kept out of this permit list: only an admin may set it,
+  # handled explicitly in #update rather than via mass assignment.
+  def user_params
+    params.require(:user).permit(:crawler_name, :avatar)
+  end
+
+  def role_param
+    params.dig(:user, :role)
   end
 end

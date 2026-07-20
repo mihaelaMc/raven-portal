@@ -10,6 +10,27 @@ RSpec.describe "Api::V1::Users", type: :request do
     response.headers["Authorization"]
   end
 
+  describe "GET /api/v1/users" do
+    it "lets an admin list all users with pagination metadata" do
+      auth = token_for(admin)
+
+      get "/api/v1/users", params: { per_page: 2 }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body["users"].size).to eq(2)
+      expect(body["meta"]).to eq("current_page" => 1, "total_pages" => 2, "total_count" => 3)
+    end
+
+    it "forbids a non-admin" do
+      auth = token_for(user)
+
+      get "/api/v1/users", headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
   describe "GET /api/v1/users/:id" do
     it "lets an admin view any user" do
       auth = token_for(admin)
@@ -40,6 +61,75 @@ RSpec.describe "Api::V1::Users", type: :request do
       get "/api/v1/users/#{other_user.id}"
 
       expect(response).to have_http_status(:unauthorized)
+    end
+  end
+
+  describe "PATCH /api/v1/users/:id" do
+    it "lets a user update their own crawler_name" do
+      auth = token_for(user)
+
+      patch "/api/v1/users/#{user.id}", params: { user: { crawler_name: "Grix the Bold" } }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.crawler_name).to eq("Grix the Bold")
+    end
+
+    it "ignores a role change from a non-admin" do
+      auth = token_for(user)
+
+      patch "/api/v1/users/#{user.id}", params: { user: { role: "admin" } }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.role).to eq("user")
+    end
+
+    it "lets an admin change another user's role" do
+      auth = token_for(admin)
+
+      patch "/api/v1/users/#{user.id}", params: { user: { role: "admin" } }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.role).to eq("admin")
+    end
+
+    it "forbids a user from updating someone else" do
+      auth = token_for(user)
+
+      patch "/api/v1/users/#{other_user.id}", params: { user: { crawler_name: "Hijacked" } }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:forbidden)
+      expect(other_user.reload.crawler_name).to eq("Fenn")
+    end
+  end
+
+  describe "DELETE /api/v1/users/:id" do
+    it "lets a user delete themself and cascades their refresh tokens" do
+      auth = token_for(user)
+      RefreshToken.issue_for(user)
+
+      delete "/api/v1/users/#{user.id}", headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:no_content)
+      expect(User.exists?(user.id)).to be false
+      expect(RefreshToken.where(user_id: user.id)).to be_empty
+    end
+
+    it "lets an admin delete another user" do
+      auth = token_for(admin)
+
+      delete "/api/v1/users/#{other_user.id}", headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:no_content)
+      expect(User.exists?(other_user.id)).to be false
+    end
+
+    it "forbids a user from deleting someone else" do
+      auth = token_for(user)
+
+      delete "/api/v1/users/#{other_user.id}", headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:forbidden)
+      expect(User.exists?(other_user.id)).to be true
     end
   end
 end

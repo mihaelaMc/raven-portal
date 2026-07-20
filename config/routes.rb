@@ -12,7 +12,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "refresh", to: "refresh_tokens#create"
       resource :profile, only: [ :show ], path: "me"
-      resources :users, only: [ :show ]
+      resources :users, only: [ :index, :show, :update, :destroy ]
     end
   end
 
