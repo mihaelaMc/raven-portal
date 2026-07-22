@@ -29,6 +29,26 @@ RSpec.describe "Api::V1::Users", type: :request do
 
       expect(response).to have_http_status(:forbidden)
     end
+
+    it "filters by crawler_name or email with the q param" do
+      auth = token_for(admin)
+
+      get "/api/v1/users", params: { q: "fenn" }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body["users"].map { |u| u["crawler_name"] }).to eq([ "Fenn" ])
+      expect(body["meta"]).to eq("current_page" => 1, "total_pages" => 1, "total_count" => 1)
+    end
+
+    it "escapes ILIKE wildcard characters in the q param" do
+      auth = token_for(admin)
+
+      get "/api/v1/users", params: { q: "%" }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)["users"]).to eq([])
+    end
   end
 
   describe "GET /api/v1/users/:id" do

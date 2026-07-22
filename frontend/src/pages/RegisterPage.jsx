@@ -32,38 +32,65 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="auth-page">
-      <h1>Create Your Crawler</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Crawler name
-          <input value={crawlerName} onChange={(e) => setCrawlerName(e.target.value)} required />
-        </label>
-        <label>
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        <label>
-          Confirm password
-          <input
-            type="password"
-            value={passwordConfirmation}
-            onChange={(e) => setPasswordConfirmation(e.target.value)}
-            required
-          />
-        </label>
-        {error && <p className="form-error">{error}</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? "Entering..." : "Enter the dungeon"}
-        </button>
-      </form>
-      <p>
-        Already a crawler? <Link to="/login">Sign in</Link>
-      </p>
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        <h1 className="text-3xl font-bold text-parchment">Create Your Crawler</h1>
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          <label className="flex flex-col gap-1 text-sm">
+            Crawler name
+            <input
+              value={crawlerName}
+              onChange={(e) => setCrawlerName(e.target.value)}
+              required
+              className="rounded-md border border-dungeon-border bg-dungeon-panel px-3 py-2 text-parchment focus:outline-none focus:ring-2 focus:ring-torch"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="rounded-md border border-dungeon-border bg-dungeon-panel px-3 py-2 text-parchment focus:outline-none focus:ring-2 focus:ring-torch"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="rounded-md border border-dungeon-border bg-dungeon-panel px-3 py-2 text-parchment focus:outline-none focus:ring-2 focus:ring-torch"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            Confirm password
+            <input
+              type="password"
+              value={passwordConfirmation}
+              onChange={(e) => setPasswordConfirmation(e.target.value)}
+              required
+              className="rounded-md border border-dungeon-border bg-dungeon-panel px-3 py-2 text-parchment focus:outline-none focus:ring-2 focus:ring-torch"
+            />
+          </label>
+          {error && <p className="text-sm text-ember">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-md bg-torch py-2 font-semibold text-dungeon disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? "Entering..." : "Enter the dungeon"}
+          </button>
+        </form>
+        <p className="mt-4 text-sm">
+          Already a crawler?{" "}
+          <Link to="/login" className="text-arcane hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }
