@@ -4,7 +4,10 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  # "localhost" resolves to the IPv6 loopback (::1) first on some systems
+  # (notably Windows), which breaks the connection if Postgres is only
+  # listening on IPv4 — 127.0.0.1 sidesteps that ambiguity entirely.
+  host: <%= ENV.fetch("POSTGRES_HOST", "127.0.0.1") %>
   port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
   username: <%= ENV.fetch("POSTGRES_USER", "postgres") %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD", "postgres") %>
