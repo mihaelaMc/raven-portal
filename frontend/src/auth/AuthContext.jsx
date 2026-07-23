@@ -52,7 +52,12 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const value = useMemo(() => ({ user, status, login, register, logout }), [user, status])
+  async function refreshUser() {
+    const response = await client.get("/me")
+    setUser(response.data.user)
+  }
+
+  const value = useMemo(() => ({ user, status, login, register, logout, refreshUser }), [user, status])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

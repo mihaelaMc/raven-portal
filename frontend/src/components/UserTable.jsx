@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import toast from "react-hot-toast"
 import { useAuth } from "../auth/AuthContext"
 import { useDeleteUserMutation, useUpdateUserMutation, useUsersQuery } from "../hooks/useUsers"
 import RoleBadge from "./RoleBadge"
@@ -84,6 +85,7 @@ export default function UserTable() {
   async function handleSave(fields) {
     try {
       await updateMutation.mutateAsync({ id: editingUser.id, data: fields })
+      toast.success(`${editingUser.crawler_name}'s profile updated.`)
       setEditingUser(null)
     } catch (err) {
       setEditError(err.response?.data?.errors?.join(", ") || "Something went wrong.")
@@ -91,8 +93,13 @@ export default function UserTable() {
   }
 
   async function handleDelete() {
-    await deleteMutation.mutateAsync(deletingUser.id)
-    setDeletingUser(null)
+    try {
+      await deleteMutation.mutateAsync(deletingUser.id)
+      toast.success(`${deletingUser.crawler_name} was deleted.`)
+      setDeletingUser(null)
+    } catch {
+      toast.error("Couldn't delete that crawler.")
+    }
   }
 
   const meta = data?.meta
