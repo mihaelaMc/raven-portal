@@ -3,9 +3,12 @@ class Api::V1::SessionsController < Devise::SessionsController
 
   # Devise's own verify_signed_out_user check calls warden.user(run_callbacks: false),
   # which never runs the :jwt strategy, so it always looks signed-out for a token-based
-  # API. authenticate_user! runs the strategy for real, so it can tell.
+  # API. authenticate_user! runs the strategy for real - but inside a Devise controller
+  # it is a no-op unless forced (same reason Devise's own authenticate_scope! passes
+  # force: true); without it, an anonymous logout 500s on current_user being nil
+  # instead of returning 401.
   skip_before_action :verify_signed_out_user, only: :destroy
-  prepend_before_action :authenticate_user!, only: :destroy
+  prepend_before_action -> { authenticate_user!(force: true) }, only: :destroy
 
   def destroy
     @user_to_clean_up = current_user

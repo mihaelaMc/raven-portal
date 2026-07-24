@@ -1,0 +1,656 @@
+---
+openapi: 3.0.1
+info:
+  title: Raven Portal API
+  version: v1
+  description: 'JSON API for the Raven Portal dungeon-crawler gameshow. Authenticate
+    via /login or /signup, then send the returned JWT as `Authorization: Bearer <token>`.
+    Access tokens expire after 30 minutes; exchange the refresh token at /refresh
+    for a new one.'
+paths:
+  "/api/v1/audit_logs":
+    get:
+      summary: Query the audit log
+      tags:
+      - Audit logs
+      description: Admin only. Most recent first. All filters are optional and combinable.
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: audit_action
+        in: query
+        schema:
+          type: string
+          enum:
+          - login
+          - logout
+          - signup
+          - password_changed
+          - profile_updated
+          - admin_updated_user
+          - account_deleted
+          - admin_deleted_user
+        required: false
+        description: Named audit_action (not action) because action is Rails' reserved
+          routing param
+      - name: actor_id
+        in: query
+        schema:
+          type: integer
+        required: false
+      - name: subject_id
+        in: query
+        schema:
+          type: integer
+        required: false
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        required: false
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        required: false
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+          minimum: 1
+          maximum: 100
+        required: false
+      responses:
+        '200':
+          description: paginated audit log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  audit_logs:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/audit_log"
+                  meta:
+                    "$ref": "#/components/schemas/pagination_meta"
+                required:
+                - audit_logs
+                - meta
+        '403':
+          description: not an admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+  "/api/v1/signup":
+    post:
+      summary: Register a new crawler
+      tags:
+      - Authentication
+      parameters: []
+      responses:
+        '200':
+          description: crawler created and signed in
+          headers:
+            Authorization:
+              schema:
+                type: string
+              description: Bearer JWT access token (expires in 30 minutes)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    "$ref": "#/components/schemas/user"
+                  refresh_token:
+                    type: string
+                    description: Single-use; rotate at /refresh
+                required:
+                - user
+                - refresh_token
+        '422':
+          description: validation failure
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/errors"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                    password:
+                      type: string
+                      minLength: 6
+                    password_confirmation:
+                      type: string
+                    crawler_name:
+                      type: string
+                  required:
+                  - email
+                  - password
+                  - crawler_name
+              required:
+              - user
+    patch:
+      summary: Change the current user's password
+      tags:
+      - Authentication
+      description: Requires the current password. Sends a security-alert email unless
+        the user has opted out via notify_security_alerts.
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '200':
+          description: password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    "$ref": "#/components/schemas/user"
+                required:
+                - user
+        '422':
+          description: wrong current password
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/errors"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    current_password:
+                      type: string
+                    password:
+                      type: string
+                      minLength: 6
+                    password_confirmation:
+                      type: string
+                  required:
+                  - current_password
+                  - password
+                  - password_confirmation
+              required:
+              - user
+  "/api/v1/login":
+    post:
+      summary: Sign in
+      tags:
+      - Authentication
+      parameters: []
+      responses:
+        '200':
+          description: signed in
+          headers:
+            Authorization:
+              schema:
+                type: string
+              description: Bearer JWT access token (expires in 30 minutes)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    "$ref": "#/components/schemas/user"
+                  refresh_token:
+                    type: string
+                    description: Single-use; rotate at /refresh
+                required:
+                - user
+                - refresh_token
+        '401':
+          description: bad credentials
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                    password:
+                      type: string
+                  required:
+                  - email
+                  - password
+              required:
+              - user
+  "/api/v1/logout":
+    delete:
+      summary: Sign out
+      tags:
+      - Authentication
+      description: Revokes the presented JWT (denylist) and all of the user's outstanding
+        refresh tokens.
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: signed out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                - message
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+  "/api/v1/me":
+    get:
+      summary: Current user's profile
+      tags:
+      - Profile
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: the authenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/user"
+                required:
+                - user
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+  "/api/v1/refresh":
+    post:
+      summary: Exchange a refresh token for a new access token
+      tags:
+      - Authentication
+      description: 'Rotates the refresh token: the presented one is revoked and a
+        new one is returned alongside the fresh access token.'
+      parameters: []
+      responses:
+        '200':
+          description: token rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  refresh_token:
+                    type: string
+                  user:
+                    "$ref": "#/components/schemas/user"
+                required:
+                - access_token
+                - refresh_token
+                - user
+        '401':
+          description: invalid, expired, or already-rotated token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+              required:
+              - refresh_token
+  "/api/v1/users":
+    get:
+      summary: List users
+      tags:
+      - Users
+      description: Admin only. Paginated; q searches crawler_name and email (case-insensitive
+        substring).
+      security:
+      - bearer_auth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+        required: false
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+          default: 25
+          minimum: 1
+          maximum: 100
+        required: false
+        description: Values outside 1..100 are clamped
+      - name: q
+        in: query
+        schema:
+          type: string
+        required: false
+        description: Search by crawler name or email
+      responses:
+        '200':
+          description: paginated users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/user"
+                  meta:
+                    "$ref": "#/components/schemas/pagination_meta"
+                required:
+                - users
+                - meta
+        '403':
+          description: not an admin
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '401':
+          description: missing or invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+  "/api/v1/users/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    get:
+      summary: View a user
+      tags:
+      - Users
+      description: A user can view themself; admins can view anyone.
+      security:
+      - bearer_auth: []
+      responses:
+        '200':
+          description: the user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/user"
+                required:
+                - user
+        '403':
+          description: viewing someone else without admin role
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+        '404':
+          description: no such user
+    patch:
+      summary: Update a user
+      tags:
+      - Users
+      description: A user can update themself; admins can update anyone. `role` is
+        applied only when the caller is an admin (silently ignored otherwise). Avatar
+        uploads use multipart/form-data with the same field names (user[avatar] as
+        a PNG/JPEG/WEBP file up to 5MB).
+      security:
+      - bearer_auth: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    "$ref": "#/components/schemas/user"
+                required:
+                - user
+        '422':
+          description: validation failure
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/errors"
+        '403':
+          description: updating someone else without admin role
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    crawler_name:
+                      type: string
+                    notify_security_alerts:
+                      type: boolean
+                    role:
+                      type: string
+                      enum:
+                      - user
+                      - admin
+                      description: Admin callers only
+                    avatar:
+                      type: string
+                      format: binary
+                      description: multipart/form-data only
+              required:
+              - user
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    crawler_name:
+                      type: string
+                    notify_security_alerts:
+                      type: boolean
+                    role:
+                      type: string
+                      enum:
+                      - user
+                      - admin
+                      description: Admin callers only
+                    avatar:
+                      type: string
+                      format: binary
+                      description: multipart/form-data only
+              required:
+              - user
+    delete:
+      summary: Delete a user
+      tags:
+      - Users
+      description: A user can delete themself; admins can delete anyone. Cascades
+        the user's refresh tokens; audit history is preserved.
+      security:
+      - bearer_auth: []
+      responses:
+        '204':
+          description: deleted
+        '403':
+          description: deleting someone else without admin role
+servers:
+- url: http://localhost:3000
+  description: Development
+components:
+  securitySchemes:
+    bearer_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    user:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        crawler_name:
+          type: string
+        role:
+          type: string
+          enum:
+          - user
+          - admin
+        notify_security_alerts:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        avatar_url:
+          type: string
+          nullable: true
+          description: Path relative to the API origin, null when no avatar is attached
+      required:
+      - id
+      - email
+      - crawler_name
+      - role
+    pagination_meta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_count:
+          type: integer
+      required:
+      - current_page
+      - total_pages
+      - total_count
+    audit_log:
+      type: object
+      properties:
+        id:
+          type: integer
+        actor_id:
+          type: integer
+          description: User who performed the action (no FK - survives user deletion)
+        subject_id:
+          type: integer
+          description: User the action was performed on
+        action:
+          type: string
+          enum:
+          - login
+          - logout
+          - signup
+          - password_changed
+          - profile_updated
+          - admin_updated_user
+          - account_deleted
+          - admin_deleted_user
+        metadata:
+          type: object
+          additionalProperties: true
+        ip_address:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - actor_id
+      - subject_id
+      - action
+    error:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+      - error
+    errors:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+      - errors

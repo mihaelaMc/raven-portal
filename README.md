@@ -43,6 +43,13 @@ and the frontend consumes it over CORS.
 - **Testing**: [RSpec](https://rspec.info/) — model, request, policy,
   job, and mailer specs.
 
+### API documentation
+
+Interactive Swagger UI is served at **`/api-docs`** (backed by an OpenAPI 3
+spec in `swagger/v1/swagger.yaml`, generated from executable RSpec doc specs
+in `spec/api/` — regenerate with `bin/rake rswag:specs:swaggerize` after
+changing endpoints).
+
 ### API endpoints (so far)
 
 | Method | Path                   | Description                                       |

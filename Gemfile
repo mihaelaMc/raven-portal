@@ -21,6 +21,9 @@ gem "rack-cors"
 gem "kaminari"
 # Rate limiting / throttling [https://github.com/rack/rack-attack]
 gem "rack-attack"
+# Serve the OpenAPI spec + Swagger UI at /api-docs [https://github.com/rswag/rswag]
+gem "rswag-api"
+gem "rswag-ui"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -57,6 +60,9 @@ group :development, :test do
 
   # RSpec for unit/request/policy specs [https://github.com/rspec/rspec-rails]
   gem "rspec-rails"
+
+  # Generate the OpenAPI spec from RSpec doc specs [https://github.com/rswag/rswag]
+  gem "rswag-specs"
 end
 
 group :development do
