@@ -4,7 +4,7 @@ class Api::V1::UsersController < Api::V1::BaseController
 
     users = User.all
     users = users.where("crawler_name ILIKE :q OR email ILIKE :q", q: "%#{User.sanitize_sql_like(params[:q])}%") if params[:q].present?
-    users = users.order(:id).page(params[:page]).per(params[:per_page] || 25)
+    users = users.order(:id).page(params[:page]).per(per_page_param)
 
     render json: {
       users: users,

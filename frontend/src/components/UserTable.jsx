@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import toast from "react-hot-toast"
+import { apiAssetUrl } from "../api/client"
 import { useAuth } from "../auth/AuthContext"
 import { useDeleteUserMutation, useUpdateUserMutation, useUsersQuery } from "../hooks/useUsers"
 import RoleBadge from "./RoleBadge"
@@ -37,7 +38,7 @@ export default function UserTable() {
         header: "",
         cell: (info) =>
           info.getValue() ? (
-            <img src={info.getValue()} alt="" className="h-8 w-8 rounded-full object-cover" />
+            <img src={apiAssetUrl(info.getValue())} alt="" className="h-8 w-8 rounded-full object-cover" />
           ) : (
             <div className="h-8 w-8 rounded-full bg-dungeon-border" />
           ),

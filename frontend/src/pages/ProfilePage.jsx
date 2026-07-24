@@ -5,6 +5,7 @@ import { z } from "zod"
 import toast from "react-hot-toast"
 import { Link } from "react-router-dom"
 import { useAuth } from "../auth/AuthContext"
+import { apiAssetUrl } from "../api/client"
 import { changePassword, updateProfile } from "../api/profile"
 
 const ALLOWED_AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"]
@@ -12,6 +13,7 @@ const MAX_AVATAR_SIZE = 5 * 1024 * 1024
 
 const profileSchema = z.object({
   crawlerName: z.string().min(1, "Crawler name is required"),
+  notifySecurityAlerts: z.boolean(),
   avatar: z
     .instanceof(FileList)
     .optional()
@@ -43,7 +45,10 @@ export default function ProfilePage() {
 
   const profileForm = useForm({
     resolver: zodResolver(profileSchema),
-    defaultValues: { crawlerName: user?.crawler_name ?? "" },
+    defaultValues: {
+      crawlerName: user?.crawler_name ?? "",
+      notifySecurityAlerts: user?.notify_security_alerts ?? true,
+    },
   })
 
   const avatarFiles = profileForm.watch("avatar")
@@ -61,10 +66,18 @@ export default function ProfilePage() {
 
   async function onProfileSubmit(values) {
     try {
-      await updateProfile(user.id, { crawlerName: values.crawlerName, avatarFile: values.avatar?.[0] })
+      await updateProfile(user.id, {
+        crawlerName: values.crawlerName,
+        notifySecurityAlerts: values.notifySecurityAlerts,
+        avatarFile: values.avatar?.[0],
+      })
       await refreshUser()
       toast.success("Profile updated.")
-      profileForm.reset({ crawlerName: values.crawlerName, avatar: undefined })
+      profileForm.reset({
+        crawlerName: values.crawlerName,
+        notifySecurityAlerts: values.notifySecurityAlerts,
+        avatar: undefined,
+      })
     } catch (err) {
       toast.error(errorMessage(err, "Couldn't update profile."))
     }
@@ -99,7 +112,11 @@ export default function ProfilePage() {
         <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="mt-4 flex flex-col gap-4">
           <div className="flex items-center gap-4">
             {previewUrl || user?.avatar_url ? (
-              <img src={previewUrl || user.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />
+              <img
+                src={previewUrl || apiAssetUrl(user.avatar_url)}
+                alt=""
+                className="h-16 w-16 rounded-full object-cover"
+              />
             ) : (
               <div className="h-16 w-16 rounded-full bg-dungeon-border" />
             )}
@@ -129,6 +146,11 @@ export default function ProfilePage() {
           </label>
 
           <div className="text-sm text-parchment/60">Email: {user?.email}</div>
+
+          <label className="flex items-center gap-2 text-sm text-parchment">
+            <input type="checkbox" {...profileForm.register("notifySecurityAlerts")} className="accent-torch" />
+            Email me when my password is changed
+          </label>
 
           <button
             type="submit"

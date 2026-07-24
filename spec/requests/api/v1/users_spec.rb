@@ -30,6 +30,15 @@ RSpec.describe "Api::V1::Users", type: :request do
       expect(response).to have_http_status(:forbidden)
     end
 
+    it "clamps a degenerate per_page instead of raising" do
+      auth = token_for(admin)
+
+      get "/api/v1/users", params: { per_page: 0 }, headers: { "Authorization" => auth }
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)["users"]).not_to be_empty
+    end
+
     it "filters by crawler_name or email with the q param" do
       auth = token_for(admin)
 

@@ -11,7 +11,7 @@ class Api::V1::AuditLogsController < Api::V1::BaseController
     logs = logs.where(subject_id: params[:subject_id]) if params[:subject_id].present?
     logs = logs.where(created_at: params[:from]..) if params[:from].present?
     logs = logs.where(created_at: ..params[:to]) if params[:to].present?
-    logs = logs.order(created_at: :desc).page(params[:page]).per(params[:per_page] || 25)
+    logs = logs.order(created_at: :desc).page(params[:page]).per(per_page_param)
 
     render json: {
       audit_logs: logs,

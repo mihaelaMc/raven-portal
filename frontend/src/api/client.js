@@ -5,6 +5,14 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/
 
 const client = axios.create({ baseURL })
 
+// The API returns asset paths (e.g. avatar_url) relative to its own origin.
+// A bare relative src in an <img> would resolve against the frontend's origin
+// (the Vite dev server) instead, so anchor it to the API's origin explicitly.
+export function apiAssetUrl(path) {
+  if (!path) return null
+  return new URL(path, new URL(baseURL).origin).href
+}
+
 // Tokens are stored raw (no "Bearer " prefix) in tokenStore; the login/signup Authorization
 // response header comes with the prefix and gets stripped before storage in AuthContext, and
 // the refresh endpoint's access_token is already raw — so this is the one place it gets added.
