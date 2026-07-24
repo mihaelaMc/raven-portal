@@ -25,6 +25,14 @@ RSpec.describe "Api::V1::Registrations", type: :request do
       body = JSON.parse(response.body)
       expect(body["errors"]).to include(a_string_matching(/crawler name/i))
     end
+
+    it "logs the signup" do
+      expect {
+        post "/api/v1/signup", params: {
+          user: { email: "crawler@example.com", password: "password123", crawler_name: "Grix" }
+        }
+      }.to have_enqueued_job(AuditLogJob).with(hash_including(action: "signup", ip_address: "127.0.0.1"))
+    end
   end
 
   describe "PATCH /api/v1/signup" do
@@ -47,6 +55,18 @@ RSpec.describe "Api::V1::Registrations", type: :request do
 
       post "/api/v1/login", params: { user: { email: user.email, password: "newpassword456" } }
       expect(response).to have_http_status(:ok)
+    end
+
+    it "logs the password change" do
+      auth = token_for(user)
+
+      expect {
+        patch "/api/v1/signup", params: {
+          user: { current_password: "password123", password: "newpassword456", password_confirmation: "newpassword456" }
+        }, headers: { "Authorization" => auth }
+      }.to have_enqueued_job(AuditLogJob).with(
+        actor_id: user.id, subject_id: user.id, action: "password_changed", ip_address: "127.0.0.1"
+      )
     end
 
     it "rejects the wrong current_password" do

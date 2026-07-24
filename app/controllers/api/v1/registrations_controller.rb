@@ -9,6 +9,13 @@ class Api::V1::RegistrationsController < Devise::RegistrationsController
     resource_updated = update_resource(resource, account_update_params)
 
     if resource_updated
+      AuditLogJob.perform_later(
+        actor_id: resource.id,
+        subject_id: resource.id,
+        action: "password_changed",
+        ip_address: request.remote_ip
+      )
+
       render json: { message: "Your details have been updated.", user: resource }, status: :ok
     else
       clean_up_passwords(resource)
@@ -21,6 +28,13 @@ class Api::V1::RegistrationsController < Devise::RegistrationsController
   def respond_with(resource, _opts = {})
     if resource.persisted?
       _, raw_refresh_token = RefreshToken.issue_for(resource)
+
+      AuditLogJob.perform_later(
+        actor_id: resource.id,
+        subject_id: resource.id,
+        action: "signup",
+        ip_address: request.remote_ip
+      )
 
       render json: {
         message: "Your crawler has entered the dungeon.",

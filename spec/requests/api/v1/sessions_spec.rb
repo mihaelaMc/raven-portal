@@ -17,6 +17,12 @@ RSpec.describe "Api::V1::Sessions", type: :request do
 
       expect(response).to have_http_status(:unauthorized)
     end
+
+    it "logs the login" do
+      expect {
+        post "/api/v1/login", params: { user: { email: user.email, password: "password123" } }
+      }.to have_enqueued_job(AuditLogJob).with(actor_id: user.id, subject_id: user.id, action: "login", ip_address: "127.0.0.1")
+    end
   end
 
   describe "DELETE /api/v1/logout" do
@@ -29,6 +35,15 @@ RSpec.describe "Api::V1::Sessions", type: :request do
 
       get "/api/v1/me", headers: { "Authorization" => token }
       expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "logs the logout" do
+      post "/api/v1/login", params: { user: { email: user.email, password: "password123" } }
+      token = response.headers["Authorization"]
+
+      expect {
+        delete "/api/v1/logout", headers: { "Authorization" => token }
+      }.to have_enqueued_job(AuditLogJob).with(actor_id: user.id, subject_id: user.id, action: "logout", ip_address: "127.0.0.1")
     end
   end
 end

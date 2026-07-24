@@ -8,7 +8,8 @@ class Api::V1::SessionsController < Devise::SessionsController
   prepend_before_action :authenticate_user!, only: :destroy
 
   def destroy
-    current_user.refresh_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
+    @user_to_clean_up = current_user
+    @user_to_clean_up.refresh_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
     super
   end
 
@@ -16,6 +17,13 @@ class Api::V1::SessionsController < Devise::SessionsController
 
   def respond_with(resource, _opts = {})
     _, raw_refresh_token = RefreshToken.issue_for(resource)
+
+    AuditLogJob.perform_later(
+      actor_id: resource.id,
+      subject_id: resource.id,
+      action: "login",
+      ip_address: request.remote_ip
+    )
 
     render json: {
       message: "The dungeon remembers you.",
@@ -25,6 +33,13 @@ class Api::V1::SessionsController < Devise::SessionsController
   end
 
   def respond_to_on_destroy(non_navigational_status: :no_content)
+    AuditLogJob.perform_later(
+      actor_id: @user_to_clean_up.id,
+      subject_id: @user_to_clean_up.id,
+      action: "logout",
+      ip_address: request.remote_ip
+    )
+
     render json: { message: "You have left the dungeon." }, status: :ok
   end
 end

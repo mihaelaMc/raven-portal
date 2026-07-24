@@ -69,4 +69,7 @@ RSpec.configure do |config|
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+
+  # Lets request specs assert on AuditLogJob (and any future job) with have_enqueued_job.
+  config.include ActiveJob::TestHelper, type: :request
 end

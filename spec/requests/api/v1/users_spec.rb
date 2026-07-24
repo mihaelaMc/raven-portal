@@ -120,6 +120,22 @@ RSpec.describe "Api::V1::Users", type: :request do
       expect(response).to have_http_status(:forbidden)
       expect(other_user.reload.crawler_name).to eq("Fenn")
     end
+
+    it "logs a self profile update" do
+      auth = token_for(user)
+
+      expect {
+        patch "/api/v1/users/#{user.id}", params: { user: { crawler_name: "Grix the Bold" } }, headers: { "Authorization" => auth }
+      }.to have_enqueued_job(AuditLogJob).with(hash_including(actor_id: user.id, subject_id: user.id, action: "profile_updated"))
+    end
+
+    it "logs an admin update of another user" do
+      auth = token_for(admin)
+
+      expect {
+        patch "/api/v1/users/#{user.id}", params: { user: { role: "admin" } }, headers: { "Authorization" => auth }
+      }.to have_enqueued_job(AuditLogJob).with(hash_including(actor_id: admin.id, subject_id: user.id, action: "admin_updated_user"))
+    end
   end
 
   describe "DELETE /api/v1/users/:id" do
@@ -150,6 +166,23 @@ RSpec.describe "Api::V1::Users", type: :request do
 
       expect(response).to have_http_status(:forbidden)
       expect(User.exists?(other_user.id)).to be true
+    end
+
+    it "logs a self-delete" do
+      auth = token_for(user)
+      user_id = user.id
+
+      expect {
+        delete "/api/v1/users/#{user_id}", headers: { "Authorization" => auth }
+      }.to have_enqueued_job(AuditLogJob).with(hash_including(actor_id: user_id, subject_id: user_id, action: "account_deleted"))
+    end
+
+    it "logs an admin delete of another user" do
+      auth = token_for(admin)
+
+      expect {
+        delete "/api/v1/users/#{other_user.id}", headers: { "Authorization" => auth }
+      }.to have_enqueued_job(AuditLogJob).with(hash_including(actor_id: admin.id, subject_id: other_user.id, action: "admin_deleted_user"))
     end
   end
 end

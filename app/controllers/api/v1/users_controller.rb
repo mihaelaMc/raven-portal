@@ -31,6 +31,7 @@ class Api::V1::UsersController < Api::V1::BaseController
     user.role = role_param if current_user.admin? && role_param.present?
 
     if user.save
+      log_update(user)
       render json: { user: user }, status: :ok
     else
       render json: { errors: user.errors.full_messages }, status: :unprocessable_content
@@ -41,7 +42,20 @@ class Api::V1::UsersController < Api::V1::BaseController
     user = User.find(params[:id])
     authorize user
 
+    actor_id = current_user.id
+    action = actor_id == user.id ? "account_deleted" : "admin_deleted_user"
+    snapshot = { "email" => user.email, "crawler_name" => user.crawler_name, "role" => user.role }
+
     user.destroy
+
+    AuditLogJob.perform_later(
+      actor_id: actor_id,
+      subject_id: user.id,
+      action: action,
+      metadata: snapshot,
+      ip_address: request.remote_ip
+    )
+
     head :no_content
   end
 
@@ -55,5 +69,18 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   def role_param
     params.dig(:user, :role)
+  end
+
+  def log_update(user)
+    changes = user.saved_changes.except("updated_at").transform_values { |(from, to)| { "from" => from, "to" => to } }
+    action = current_user.id == user.id ? "profile_updated" : "admin_updated_user"
+
+    AuditLogJob.perform_later(
+      actor_id: current_user.id,
+      subject_id: user.id,
+      action: action,
+      metadata: { "changes" => changes, "avatar_updated" => user_params[:avatar].present? },
+      ip_address: request.remote_ip
+    )
   end
 end

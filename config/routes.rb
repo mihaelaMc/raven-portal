@@ -13,6 +13,7 @@ Rails.application.routes.draw do
       post "refresh", to: "refresh_tokens#create"
       resource :profile, only: [ :show ], path: "me"
       resources :users, only: [ :index, :show, :update, :destroy ]
+      resources :audit_logs, only: [ :index ]
     end
   end
 
