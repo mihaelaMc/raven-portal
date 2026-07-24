@@ -18,6 +18,11 @@ RSpec.describe User, type: :model do
     expect(user.admin?).to be true
   end
 
+  it "defaults notify_security_alerts to true" do
+    user = User.create!(email: "crawler@example.com", password: "password123", crawler_name: "Grix")
+    expect(user.notify_security_alerts).to be true
+  end
+
   describe "avatar" do
     def user_with_avatar(io:, filename:, content_type:)
       user = User.new(email: "crawler@example.com", password: "password123", crawler_name: "Grix")

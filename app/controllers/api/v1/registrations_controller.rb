@@ -9,12 +9,16 @@ class Api::V1::RegistrationsController < Devise::RegistrationsController
     resource_updated = update_resource(resource, account_update_params)
 
     if resource_updated
-      AuditLogJob.perform_later(
-        actor_id: resource.id,
-        subject_id: resource.id,
-        action: "password_changed",
-        ip_address: request.remote_ip
-      )
+      if resource.saved_change_to_encrypted_password?
+        AuditLogJob.perform_later(
+          actor_id: resource.id,
+          subject_id: resource.id,
+          action: "password_changed",
+          ip_address: request.remote_ip
+        )
+
+        UserMailer.security_alert(resource).deliver_later if resource.notify_security_alerts?
+      end
 
       render json: { message: "Your details have been updated.", user: resource }, status: :ok
     else
@@ -35,6 +39,8 @@ class Api::V1::RegistrationsController < Devise::RegistrationsController
         action: "signup",
         ip_address: request.remote_ip
       )
+
+      UserMailer.welcome_email(resource).deliver_later
 
       render json: {
         message: "Your crawler has entered the dungeon.",

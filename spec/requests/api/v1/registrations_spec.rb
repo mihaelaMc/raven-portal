@@ -33,6 +33,14 @@ RSpec.describe "Api::V1::Registrations", type: :request do
         }
       }.to have_enqueued_job(AuditLogJob).with(hash_including(action: "signup", ip_address: "127.0.0.1"))
     end
+
+    it "sends a welcome email" do
+      expect {
+        post "/api/v1/signup", params: {
+          user: { email: "crawler@example.com", password: "password123", crawler_name: "Grix" }
+        }
+      }.to have_enqueued_mail(UserMailer, :welcome_email)
+    end
   end
 
   describe "PATCH /api/v1/signup" do
@@ -67,6 +75,27 @@ RSpec.describe "Api::V1::Registrations", type: :request do
       }.to have_enqueued_job(AuditLogJob).with(
         actor_id: user.id, subject_id: user.id, action: "password_changed", ip_address: "127.0.0.1"
       )
+    end
+
+    it "sends a security alert email when the user has alerts enabled" do
+      auth = token_for(user)
+
+      expect {
+        patch "/api/v1/signup", params: {
+          user: { current_password: "password123", password: "newpassword456", password_confirmation: "newpassword456" }
+        }, headers: { "Authorization" => auth }
+      }.to have_enqueued_mail(UserMailer, :security_alert)
+    end
+
+    it "doesn't send a security alert email when the user opted out" do
+      user.update!(notify_security_alerts: false)
+      auth = token_for(user)
+
+      expect {
+        patch "/api/v1/signup", params: {
+          user: { current_password: "password123", password: "newpassword456", password_confirmation: "newpassword456" }
+        }, headers: { "Authorization" => auth }
+      }.not_to have_enqueued_mail(UserMailer, :security_alert)
     end
 
     it "rejects the wrong current_password" do

@@ -14,7 +14,7 @@ class User < ApplicationRecord
   validate :avatar_valid
 
   def as_json(options = {})
-    super(options.merge(only: %i[ id email crawler_name role created_at ])).merge(
+    super(options.merge(only: %i[ id email crawler_name role notify_security_alerts created_at ])).merge(
       "avatar_url" => avatar_url
     )
   end

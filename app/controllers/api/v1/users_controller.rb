@@ -64,7 +64,7 @@ class Api::V1::UsersController < Api::V1::BaseController
   # :role is deliberately kept out of this permit list: only an admin may set it,
   # handled explicitly in #update rather than via mass assignment.
   def user_params
-    params.require(:user).permit(:crawler_name, :avatar)
+    params.require(:user).permit(:crawler_name, :avatar, :notify_security_alerts)
   end
 
   def role_param

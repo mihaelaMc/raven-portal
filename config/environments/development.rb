@@ -40,6 +40,14 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
+  # Pop sent emails open in a browser tab instead of actually delivering them.
+  config.action_mailer.delivery_method = :letter_opener
+  config.action_mailer.perform_deliveries = true
+
+  # Rails::MailersController-backed preview UI at /rails/mailers, matching this
+  # project's RSpec-only layout rather than reintroducing a test/ directory.
+  config.action_mailer.preview_paths << Rails.root.join("spec/mailers/previews")
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
