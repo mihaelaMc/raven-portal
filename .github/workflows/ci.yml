@@ -50,6 +50,19 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build API image
+        run: docker build -t raven-portal-api .
+
+      - name: Build frontend image
+        run: docker build -t raven-portal-frontend frontend
+
   frontend:
     runs-on: ubuntu-latest
     defaults:

@@ -82,3 +82,17 @@ Frontend (in `frontend/`):
 
 * `npm install`, then `cp .env.example .env`
 * `npm run dev` serves the app at http://localhost:5173
+
+## Run with Docker
+
+The whole stack (Postgres + API + frontend) runs containerized:
+
+* `cp .env.example .env`, then fill in `POSTGRES_PASSWORD` and
+  `SECRET_KEY_BASE` (generate the latter with `openssl rand -hex 64`)
+* `docker compose up --build`
+* Frontend at http://localhost:8080, API + Swagger UI at
+  http://localhost:3000/api-docs
+
+The API image runs in production mode with Solid Queue inside Puma, so
+background jobs (audit logs, emails) work in a single container. Email
+delivery is disabled unless `RESEND_API_KEY` is set.

@@ -61,8 +61,9 @@ Rails.application.configure do
   config.action_mailer.default_url_options = { host: "example.com" }
 
   # Resend's SMTP relay (https://resend.com/docs/send-with-smtp) - set RESEND_API_KEY
-  # in the deploy environment. No API key is available in this environment yet
-  # (Day 12 handles actual deploy secrets), so this is unexercised until then.
+  # in the deploy environment. Without a key, skip delivery entirely instead of
+  # letting every mail job error-and-retry against an unauthenticated connection.
+  config.action_mailer.perform_deliveries = ENV["RESEND_API_KEY"].present?
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
     address: "smtp.resend.com",
